@@ -4,7 +4,7 @@ import { IoManager } from './IoManager';
 let globalProblemId = 0;
 
 export class QuizManager {
-    private quizes: Quiz[];
+    public quizes: Quiz[];
 
     constructor() {
         this.quizes = [];
@@ -24,11 +24,11 @@ export class QuizManager {
         problem: {
             title: string;
             description: string;
-            image: string;
+            image?: string;
             answer: AllowedSubmission;
             options: {
                 title: string;
-                id: string;
+                id: number;
             }[];
         }
     ) {
@@ -36,12 +36,14 @@ export class QuizManager {
         if (!quiz) {
             return;
         }
+        console.log('adding problem from backend');
         quiz.addProblem({
             ...problem,
             startTime: new Date().getTime(),
             submissions: [],
             problemId: (globalProblemId++).toString(),
         });
+        console.log('problem added from backend');
     }
 
     public next(roomId: string) {
@@ -81,8 +83,11 @@ export class QuizManager {
         return quiz.getCurrentState();
     }
 
-    public addQuiz(roomId: string){
-      const quiz = new Quiz(roomId);
-      this.quizes.push(quiz)
+    public addQuiz(roomId: string) {
+        if (this.getQuiz(roomId)) {
+            return;
+        }
+        const quiz = new Quiz(roomId);
+        this.quizes.push(quiz);
     }
 }

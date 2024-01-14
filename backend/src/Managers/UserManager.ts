@@ -3,51 +3,46 @@ import { QuizManager } from './QuizManager';
 
 const ADMIN_PASSWORD = 'ADMIN_PASSWORD';
 export class UserManager {
-    private users: {
-        roomId: string;
-        socket: Socket;
-    }[];
     private quizmanager: QuizManager;
 
     constructor() {
-        this.users = [];
         this.quizmanager = new QuizManager();
     }
 
-    public addUser(roomId: string, socket: Socket) {
+    public addUser(socket: Socket) {
         //socketId -> randomly generated
-        this.users.push({
-            roomId,
-            socket,
-        });
-        this.createHandlers(roomId, socket);
+        this.createHandlers(socket);
     }
 
-    private createHandlers(roomId: string, socket: Socket) {
+    private createHandlers(socket: Socket) {
         socket.on('join', (data) => {
+            console.log("to delete 1")
             const userId = this.quizmanager.addUser(data.roomId, data.name);
             socket.emit('init', {
                 userId,
-                state: this.quizmanager.getCurrentState(roomId), //for a user joining in between
+                state: this.quizmanager.getCurrentState(data.roomId), //for a user joining in between
             });
         });
         socket.on('joinAdmin', (data) => {
-            const userId = this.quizmanager.addUser(data.roomId, data.name);
+            console.log("to delete 2")
             if (data.password !== ADMIN_PASSWORD) {
                 return;
             }
-
-            socket.emit('adminInit', {
-                userId,
-                state: this.quizmanager.getCurrentState(roomId), //for a user joining in between
-            });
+            console.log("hei from userManager joinAdmin");
 
             socket.on('createQuiz', (data) => {
+                console.log("creating quiz ", data.roomId);
                 this.quizmanager.addQuiz(data.roomId);
+                console.log("quiz created ", data.roomId);
+                console.log("quizes: ", this.quizmanager.quizes)
             });
 
             socket.on('createProblem', (data) => {
                 this.quizmanager.addProblem(data.roomId, data.problem);
+            });
+
+            socket.on('start', (data) => {
+                this.quizmanager.start(data.roomId);
             });
 
             socket.on('next', (data) => {
